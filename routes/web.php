@@ -11,9 +11,7 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
 Route::resource('/api/user', 'UserController');
 Route::post('/api/login', 'UserController@login'); 
+
+Route::resource('/api/collaborator', 'CollaboratorController');

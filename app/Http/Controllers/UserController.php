@@ -15,7 +15,7 @@ class UserController extends Controller
 		// Buscar los usuarios en la base de datos
 		$users = User::all();
 
-		if(is_object($users) && $users != null){
+		if(is_object($users) && sizeof($users)!=0){
 			$data = array(
 				'status'		=> 'success',
 				'code'			=> '200',
