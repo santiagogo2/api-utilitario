@@ -20,7 +20,7 @@ class CollaboratorController extends Controller
 			$data = array(
 				'status'			=> 'error',
 				'code'				=> '404',
-				'collaborators'		=> 'No existen registros en la base de datos'
+				'message'			=> 'No existen registros en la base de datos'
 			);
 		}
 
@@ -29,6 +29,27 @@ class CollaboratorController extends Controller
 
 	public function show($id){
 		$collaborator = Collaborator::find($id);
+
+		if(is_object($collaborator) && $collaborator!=null){
+			$data = array(
+				'status'			=> 'success',
+				'code'				=> '200',
+				'collaborator'		=> $collaborator
+			);
+		} else {
+			$data = array(
+				'status'			=> 'error',
+				'code'				=> '404',
+				'message'			=> 'No existe ningún colaborador registrado con el id '.$id
+			);
+		}
+
+		return response()->json($data, $data['code']);
+	}
+
+	public function getByDocument($document){
+		$collaborator = Collaborator::where('documento', $document)
+									->get();
 
 		if(is_object($collaborator) && sizeof($collaborator)!=0){
 			$data = array(
@@ -40,7 +61,7 @@ class CollaboratorController extends Controller
 			$data = array(
 				'status'			=> 'error',
 				'code'				=> '404',
-				'collaborator'		=> 'No existe ningún colaborador registrado con el id '.$id
+				'message'		=> 'No existe ningún colaborador registrado con el documento '.$document
 			);
 		}
 
@@ -53,13 +74,13 @@ class CollaboratorController extends Controller
 		$params = json_decode($json);
 		$params_array = json_decode($json, true);
 
-		if(is_object($params) && $params != 0){
+		if(is_object($params) && $params != null){
 			// Validar los datos
 			$validate = \Validator::make($params_array, [
 				'nombre'			=> 'required|regex:/^[\pL\s\-]+$/u',
 				'apellidos'			=> 'required|regex:/^[\pL\s\-]+$/u',
 				'tipoDocumento'		=> 'required|numeric',
-				'documento'			=> 'required|numeric',
+				'documento'			=> 'required|numeric|unique:collaborator',
 				'sexo'				=> 'required|numeric',
 				'fechaNacimiento'	=> 'required',
 				'edad'				=> 'required|numeric',
@@ -67,9 +88,12 @@ class CollaboratorController extends Controller
 				'arl'				=> 'required|numeric',
 				'aseguradora'		=> 'required|numeric',
 				'direccion'			=> 'required',
+				'perfil'			=> 'required|numeric',
+				'area'				=> 'required|numeric',
 				'fechaIngreso'		=> 'required',
 				'fechaEgreso'		=> 'required',
 				'fechaSintomas'		=> 'required',
+				'contagiado'		=> 'required|numeric',
 				'nexo'				=> 'required|numeric',
 				'fiebre'			=> 'required|numeric',
 				'malestarGeneral'	=> 'required|numeric',
@@ -99,7 +123,7 @@ class CollaboratorController extends Controller
 				);
 			} else {
 				// Guardar el registro 
-				$collaborator->collaborator = new Collaborator();
+				$collaborator = new Collaborator();
 
 				$collaborator->nombre				= $params->nombre;
 				$collaborator->apellidos			= $params->apellidos;
@@ -112,9 +136,12 @@ class CollaboratorController extends Controller
 				$collaborator->arl					= $params->arl;
 				$collaborator->aseguradora			= $params->aseguradora;
 				$collaborator->direccion			= $params->direccion;
+				$collaborator->perfil 				= $params->perfil;
+				$collaborator->area 				= $params->area;
 				$collaborator->fechaIngreso			= $params->fechaIngreso;
 				$collaborator->fechaEgreso			= $params->fechaEgreso;
 				$collaborator->fechaSintomas		= $params->fechaSintomas;
+				$collaborator->contagiado			= $params->contagiado;
 				$collaborator->nexo					= $params->nexo;
 				$collaborator->fiebre				= $params->fiebre;
 				$collaborator->malestarGeneral		= $params->malestarGeneral;
@@ -155,23 +182,65 @@ class CollaboratorController extends Controller
 		return response()->json($data, $data['code']);
 	}
 
+	public function updateRelated($affected, $origin, Request $request){
+		$collaborator = Collaborator::find($affected);
+
+		if(is_object($collaborator) && $collaborator != null){
+
+			$origen = Collaborator::find($origin);
+
+			if(is_object($origen) && $origen != null){
+				$collaborator = Collaborator::where('id', $affected)
+									->update(array('idRelacionado' => $origen->documento));;
+				if($collaborator != 0){
+					$data = array(
+						'status'	=> 'success',
+						'code'		=> 201,
+						'message'	=> 'Se ha relacionado al usuario '.$affected.' con el origen '.$origin
+					);
+				} else{
+					$data = array(
+						'status'	=> 'error',
+						'code'		=> 404,
+						'message'	=> 'No se ha podido actualizar el registro solicitado '.$id
+					);					
+				}				
+			} else {
+				$data = array(
+					'status'		=> 'error',
+					'code'			=> 404,
+					'message'		=> 'El usuario de origen del contagio no existe en la base de datos'
+				);
+			}
+				
+		} else {
+			$data = array(
+				'status'		=> 'error',
+				'code'			=> 404,
+				'message'		=> 'El usuario de afectado del contagio no existe en la base de datos'
+			);
+		}
+
+		return response()->json($data, $data['code']);
+	}
+
 	public function update($id, Request $request){
 		// Verificar si existe el registro
 		$collaborator = Collaborator::find($id);
 
-		if(is_object($collaborator) && $collaborator != 0){
+		if(is_object($collaborator) && $collaborator != null){
 			// Recoger los datos de la petición
 			$json = $request->input('json', null);
 			$params = json_decode($json);
-			$params_array = json_decode($json);
+			$params_array = json_decode($json, true);
 
-			if(is_object($params) && $params != 0){
+			if(is_object($params) && $params != null){
 				// Validar los datos ingresados
 				$validate = \Validator::make($params_array, [
 					'nombre'			=> 'required|regex:/^[\pL\s\-]+$/u',
 					'apellidos'			=> 'required|regex:/^[\pL\s\-]+$/u',
 					'tipoDocumento'		=> 'required|numeric',
-					'documento'			=> 'required|numeric',
+					'documento'			=> 'required|numeric|unique:collaborator,documento,'.$id,
 					'sexo'				=> 'required|numeric',
 					'fechaNacimiento'	=> 'required',
 					'edad'				=> 'required|numeric',
@@ -179,9 +248,12 @@ class CollaboratorController extends Controller
 					'arl'				=> 'required|numeric',
 					'aseguradora'		=> 'required|numeric',
 					'direccion'			=> 'required',
+					'perfil'			=> 'required|numeric',
+					'area'				=> 'required|numeric',
 					'fechaIngreso'		=> 'required',
 					'fechaEgreso'		=> 'required',
 					'fechaSintomas'		=> 'required',
+					'contagiado'		=> 'required|numeric',
 					'nexo'				=> 'required|numeric',
 					'fiebre'			=> 'required|numeric',
 					'malestarGeneral'	=> 'required|numeric',
@@ -209,9 +281,10 @@ class CollaboratorController extends Controller
 						'message'	=> 'La validación de datos ha fallado. Comuniquese con el administrador de la plataforma',
 						'errors'	=> $validate->errors()
 					);
-				} else {					
+				} else {
 					// Eliminar los datos que no se desean actualizar
 					unset($params_array['id']);
+					unset($params_array['idRelacionado']);
 					unset($params_array['created_at']);
 					unset($params_array['updated_at']);
 

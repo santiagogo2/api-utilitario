@@ -10,7 +10,7 @@ class JwtAuth{
 	public $key;
 
 	public function __construct(){
-		$this->key = 'Esta_es_la_Key_para_el Utiliraio _2020'
+		$this->key = 'Esta_es_la_Key_para_el Utiliraio _2020';
 	}
 
 	public function signup($alias, $password, $getToken=null){
@@ -58,14 +58,14 @@ class JwtAuth{
 
 		try{
 			$jwt = str_replace('"', '', $jwt);
-			$decode = JWT::decode($jwt, $this->key, ['HS256']);
+			$decoded = JWT::decode($jwt, $this->key, ['HS256']);
 		} catch(\UnexpectedValueException $e){
 			$auth = false;
 		} catch(\DomainException $e){
 			$auth = false;
 		}
 
-		if(!empty($decoded) && is_object($decoded) && isset($decode->sub)){
+		if(!empty($decoded) && is_object($decoded) && isset($decoded->sub)){
 			$auth = true;
 		} else{
 			$auth = false;

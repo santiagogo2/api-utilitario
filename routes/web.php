@@ -12,6 +12,8 @@
 */
 
 Route::resource('/api/user', 'UserController');
-Route::post('/api/login', 'UserController@login'); 
+Route::post('/api/user/login', 'UserController@login'); 
 
-Route::resource('/api/collaborator', 'CollaboratorController');
+Route::resource('/api/collaborator', 'CollaboratorController')->middleware('api-auth');
+Route::get('/api/collaborator/document/{document}', 'CollaboratorController@getByDocument')->middleware('api-auth');
+Route::put('/api/collaborator/related/{affected}/{origin}', 'CollaboratorController@updateRelated')->middleware('api-auth');
