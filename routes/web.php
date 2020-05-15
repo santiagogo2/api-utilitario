@@ -11,7 +11,7 @@
 |
 */
 
-Route::resource('/api/user', 'UserController');
+Route::resource('/api/user', 'UserController')->middleware('api-auth');
 Route::post('/api/user/login', 'UserController@login'); 
 
 Route::resource('/api/collaborator', 'CollaboratorController')->middleware('api-auth');
