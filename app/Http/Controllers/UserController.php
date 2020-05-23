@@ -120,7 +120,7 @@ class UserController extends Controller
 			$token = $request->header('Authorization', null);
 			$user = $jwtAuth->checkToken($token, true);
 
-			if($user->role == 'admin'){
+			if($user->role == 'ADMIN_ROLE'){
 				// Recoger los datos json del request
 				$json = $request->input('json', null);
 				$params = json_decode($json);
@@ -132,6 +132,7 @@ class UserController extends Controller
 						'name'			=> 'required|regex:/^[\pL\s\-]+$/u',
 						'surname'		=> 'required|regex:/^[\pL\s\-]+$/u',
 						'alias'			=> 'required|unique:users,alias,'.$id,
+						'password'		=> 'nullable',
 						'role'			=> 'required'
 					]);
 					if($validate->fails()){
@@ -144,9 +145,14 @@ class UserController extends Controller
 					} else {
 						// Eliminar los datos que no se desean actualizar
 						unset($params_array['id']);
-						unset($params_array['password']);
 						unset($params_array['created_at']);
 						unset($params_array['updated_at']);
+
+						if(isset($params->password)){
+							$params_array['password'] = hash('sha256', $params_array['password']);
+						} else {
+							unset($params_array['password']);
+						}
 
 						// Actualizar los datos
 						$user = User::where('id', $id)
@@ -199,7 +205,7 @@ class UserController extends Controller
 		$token = $request->header('Authorization', null);
 		$user = $jwtAuth->checkToken($token, true);
 
-		if($user->role == 'admin'){
+		if($user->role == 'ADMIN_ROLE'){
 			// Comprobar si el usuario existe
 			$user = User::find($id);
 

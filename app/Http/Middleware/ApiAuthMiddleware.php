@@ -16,17 +16,27 @@ class ApiAuthMiddleware
     public function handle($request, Closure $next)
     {
         $token = $request->header('Authorization');
-        $jwtAuth = new \JwtAuth;
-        $checkToken = $jwtAuth->checkToken($token);
-        if($checkToken){
-            return $next($request);
+
+        if( $token ){
+            $jwtAuth = new \JwtAuth;
+            $checkToken = $jwtAuth->checkToken($token);
+            
+            if( $checkToken ){
+                return $next($request);
+            } else {
+                $data = array(
+                    'status'        => 'error',
+                    'code'          => 401,
+                    'message'       => 'El usuario no está autenticado'
+                );
+            }           
         } else {
             $data = array(
                 'status'        => 'error',
-                'code'          => 401,
-                'message'       => 'El usuario no está autenticado'
+                'code'          => 400,
+                'message'       => 'No se ha ingresado la cabecera de autenticación'
             );
-            return response()->json($data, $data['code']);
         }
+        return response()->json($data, $data['code']);
     }
 }
